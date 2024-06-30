@@ -1,0 +1,50 @@
+TABLES : BUT000.
+
+SELECTION-SCREEN BEGIN OF BLOCK basic_data WITH FRAME TITLE text-001.
+
+* Pole obowiązkowe, wielokrotny wybór - ID partnera biznesowego
+SELECT-OPTIONS: so_par FOR but000-partner OBLIGATORY.
+
+* Pole wielokrotnego wyboru - Imię partnera
+SELECT-OPTIONS: fname FOR but000-name_first.
+
+* Pole wielokrotnego wyboru - Nazwisko partnera
+SELECT-OPTIONS: lname FOR but000-name_last.
+
+
+SELECTION-SCREEN END OF BLOCK basic_data.
+
+INITIALIZATION.
+* Ukrywanie pola daty utworzenia na początku
+  LOOP AT SCREEN.
+    IF screen-name = 'SO_CREATION_DATE-LOW' OR screen-name = 'SO_CREATION_DATE-HIGH'.
+      screen-active = 0.
+      MODIFY SCREEN.
+    ENDIF.
+  ENDLOOP.
+
+AT SELECTION-SCREEN OUTPUT.
+* Logika do ukrywania/odkrywania pola daty utworzenia, jeśli to konieczne
+* Możesz dodać swoją logikę w tym miejscu
+
+START-OF-SELECTION.
+* Główna logika programu
+  PERFORM fetch_data.
+
+FORM fetch_data.
+* Tutaj możesz dodać swoją logikę do pobierania i przetwarzania danych
+  DATA: lt_partner TYPE TABLE OF but000,
+        ls_partner TYPE but000.
+
+  SELECT * FROM but000
+    WHERE partner IN @so_par
+      AND name_first IN @fname
+      AND name_last IN @lname
+    INTO TABLE @lt_partner.
+
+  LOOP AT lt_partner INTO ls_partner.
+    WRITE: / ls_partner-partner,
+             ls_partner-name_first,
+             ls_partner-name_last.
+  ENDLOOP.
+ENDFORM.
