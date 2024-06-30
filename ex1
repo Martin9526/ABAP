@@ -1,0 +1,61 @@
+REPORT ZCHATTEST1.
+
+CLASS lcl_material_data DEFINITION.
+  PUBLIC SECTION.
+    TYPES: BEGIN OF ty_material,
+             matnr TYPE mara-matnr,
+             mtart TYPE mara-mtart,
+             matkl TYPE mara-matkl,
+             werks TYPE marc-werks,
+           END OF ty_material,
+           tt_material TYPE STANDARD TABLE OF ty_material WITH DEFAULT KEY.
+
+    CLASS-METHODS: get_material_data
+      IMPORTING
+        iv_matnr TYPE mara-matnr
+      RETURNING
+        VALUE(rt_material_data) TYPE tt_material.
+ENDCLASS.
+
+CLASS lcl_material_data IMPLEMENTATION.
+  METHOD get_material_data.
+    DATA: lt_mara TYPE TABLE OF mara,
+          lt_marc TYPE TABLE OF marc,
+          lt_result TYPE tt_material,
+          ls_material TYPE ty_material.
+
+    SELECT * FROM mara INTO TABLE lt_mara WHERE matnr = iv_matnr.
+    SELECT * FROM marc INTO TABLE lt_marc WHERE matnr = iv_matnr.
+
+    LOOP AT lt_mara INTO DATA(ls_mara).
+      CLEAR ls_material.
+      ls_material-matnr = ls_mara-matnr.
+      ls_material-mtart = ls_mara-mtart.
+      ls_material-matkl = ls_mara-matkl.
+
+      READ TABLE lt_marc INTO DATA(ls_marc) WITH KEY matnr = ls_mara-matnr.
+      IF sy-subrc = 0.
+        ls_material-werks = ls_marc-werks.
+      ENDIF.
+
+      APPEND ls_material TO lt_result.
+    ENDLOOP.
+
+    rt_material_data = lt_result.
+  ENDMETHOD.
+ENDCLASS.
+
+** START OF SELECTION MISSING
+
+START-OF-SELECTION.
+
+DATA: lt_material_data TYPE lcl_material_data=>tt_material,
+      lv_matnr TYPE mara-matnr.
+
+lv_matnr = '000000000000000011'.
+
+lt_material_data = lcl_material_data=>get_material_data( iv_matnr = lv_matnr ).
+
+LOOP AT lt_material_data INTO DATA(ls_material).
+  WRITE: / ls_material-matnr, ls_material-mtart, ls_material-matkl, ls_material-werks.
+ENDLOOP.
